@@ -24,10 +24,10 @@ LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1002836031835'))
 MONGODB_URI = environ.get("MONGODB_URI", "")
 
 # Stream Url Means Your Deploy Server App Url, Here You Media Will Be Stream And Ads Will Be Shown.
-STREAM_URL = environ.get("STREAM_URL", "")
+STREAM_URL = environ.get("STREAM_URL", "https://bottom-abbey-bjhchfguv-a18f9cc8.koyeb.app/")
 
 # This Link Used As Permanent Link That If Your Deploy App Deleted Then You Change Stream Url, So This Link Will Redirect To Stream Url.
-LINK_URL = environ.get("LINK_URL", "")
+LINK_URL = environ.get("LINK_URL", "https://www.aklink.site/2025/07/aklinks.html")
 
 # Others, Not Usefull
 PORT = environ.get("PORT", "8080")
