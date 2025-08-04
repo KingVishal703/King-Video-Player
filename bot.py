@@ -5,21 +5,16 @@
 import sys, glob, importlib, logging, logging.config, pytz, asyncio
 from pathlib import Path
 
-# Get logging configurations
+# Logging Setup
 logging.config.fileConfig('logging.conf')
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("imdbpy").setLevel(logging.ERROR)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
-from pyrogram import Client, idle 
+from pyrogram import idle 
 from info import *
-from typing import Union, Optional, AsyncGenerator
 from Script import script 
 from datetime import date, datetime 
 from aiohttp import web
@@ -29,41 +24,68 @@ from TechVJ.bot import TechVJBot, TechVJBackUpBot
 from TechVJ.util.keepalive import ping_server
 from TechVJ.bot.clients import initialize_clients
 
+# Plugin Loader
 ppath = "plugins/*.py"
 files = glob.glob(ppath)
+
+# Start Bots
 TechVJBot.start()
 TechVJBackUpBot.start()
+
 loop = asyncio.get_event_loop()
 
-
 async def start():
-    print('\n')
-    print('Initalizing Your Bot')
-    bot_info = await TechVJBot.get_me()
-    await initialize_clients()
+    print('\n🔄 Initializing Your Bot...')
+    try:
+        bot_info = await TechVJBot.get_me()
+        await initialize_clients()
+    except Exception as e:
+        logging.error(f"❌ Error initializing bot clients: {e}")
+        sys.exit(1)
+
+    # Load Plugins
     for name in files:
-        with open(name) as a:
-            patt = Path(a.name)
-            plugin_name = patt.stem.replace(".py", "")
-            plugins_dir = Path(f"plugins/{plugin_name}.py")
-            import_path = "plugins.{}".format(plugin_name)
-            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
-            load = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(load)
-            sys.modules["plugins." + plugin_name] = load
-            print("Tech VJ Imported => " + plugin_name)
+        try:
+            with open(name) as a:
+                patt = Path(a.name)
+                plugin_name = patt.stem.replace(".py", "")
+                plugins_dir = Path(f"plugins/{plugin_name}.py")
+                import_path = "plugins.{}".format(plugin_name)
+                spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
+                load = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(load)
+                sys.modules["plugins." + plugin_name] = load
+                print(f"✅ Plugin Loaded: {plugin_name}")
+        except Exception as e:
+            logging.warning(f"⚠️ Failed to load plugin {name}: {e}")
+
+    # Keepalive for Heroku
     if ON_HEROKU:
         asyncio.create_task(ping_server())
-    me = await TechVJBot.get_me()
-    tz = pytz.timezone('Asia/Kolkata')
-    today = date.today()
-    now = datetime.now(tz)
-    time = now.strftime("%H:%M:%S %p")
-    await TechVJBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
-    app = web.AppRunner(await web_server())
-    await app.setup()
-    bind_address = "0.0.0.0"
-    await web.TCPSite(app, bind_address, PORT).start()
+
+    # Restart Notification
+    try:
+        tz = pytz.timezone('Asia/Kolkata')
+        today = date.today()
+        now = datetime.now(tz)
+        time = now.strftime("%H:%M:%S %p")
+        await TechVJBot.send_message(
+            chat_id=LOG_CHANNEL,
+            text=script.RESTART_TXT.format(today, time)
+        )
+    except Exception as e:
+        logging.warning(f"⚠️ Failed to send restart log: {e}")
+
+    # Web App for Stream
+    try:
+        app = web.AppRunner(await web_server())
+        await app.setup()
+        await web.TCPSite(app, "0.0.0.0", PORT).start()
+        logging.info("🌐 Web server started successfully.")
+    except Exception as e:
+        logging.error(f"❌ Web server start failed: {e}")
+        sys.exit(1)
+
     await idle()
 
 
@@ -71,5 +93,4 @@ if __name__ == '__main__':
     try:
         loop.run_until_complete(start())
     except KeyboardInterrupt:
-        logging.info('Service Stopped Bye 👋')
-
+        logging.info('🛑 Bot Stopped. Goodbye 👋')
