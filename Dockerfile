@@ -4,13 +4,21 @@
 
 FROM python:3.10.8-slim-buster
 
-RUN apt update && apt upgrade -y
-RUN apt install git -y
-COPY requirements.txt /requirements.txt
+# Environment
+ENV PYTHONUNBUFFERED=1
 
-RUN cd /
-RUN pip3 install -U pip && pip3 install -U -r requirements.txt
-RUN mkdir /VJ-Video-Player
+# Install system dependencies and Python packages
+RUN apt update && \
+    apt upgrade -y && \
+    apt install -y git && \
+    pip install --no-cache-dir -U pip
+
+# Create working directory and copy code
 WORKDIR /VJ-Video-Player
-COPY . /VJ-Video-Player
-CMD ["python", "bot.py"]
+COPY . .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Default command to run the bot
+CMD ["python3", "bot.py"]
