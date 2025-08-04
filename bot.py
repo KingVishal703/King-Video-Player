@@ -2,40 +2,47 @@
 # Subscribe YouTube Channel For Amazing Bot @Tech_VJ
 # Ask Doubt on telegram @KingVJ01
 
-import sys, glob, importlib, logging, logging.config, pytz, asyncio
+import sys
+import glob
+import importlib.util
+import logging
+import logging.config
+import pytz
+import asyncio
 from pathlib import Path
+from datetime import date, datetime
+from aiohttp import web
 
 # Logging Setup
-logging.config.fileConfig('logging.conf')
+try:
+    logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
+except Exception as e:
+    print(f"Logging configuration error: {e}")
+
 logging.getLogger().setLevel(logging.INFO)
-logging.getLogger("pyrogram").setLevel(logging.ERROR)
-logging.getLogger("imdbpy").setLevel(logging.ERROR)
-logging.getLogger("aiohttp").setLevel(logging.ERROR)
-logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
+logging.getLogger("pyrogram").setLevel(logging.WARNING)
+logging.getLogger("aiohttp").setLevel(logging.WARNING)
 
-from pyrogram import idle 
+from pyrogram import idle
 from info import *
-from Script import script 
-from datetime import date, datetime 
-from aiohttp import web
+from Script import script
 from plugins import web_server
-
 from TechVJ.bot import TechVJBot, TechVJBackUpBot
 from TechVJ.util.keepalive import ping_server
 from TechVJ.bot.clients import initialize_clients
 
 # Plugin Loader
-ppath = "plugins/*.py"
-files = glob.glob(ppath)
+PLUGIN_PATH = Path("plugins")
+plugin_files = glob.glob(str(PLUGIN_PATH / "*.py"))
 
 # Start Bots
 TechVJBot.start()
 TechVJBackUpBot.start()
 
-loop = asyncio.get_event_loop()
-
 async def start():
     print('\n🔄 Initializing Your Bot...')
+
+    # Start clients and get bot info
     try:
         bot_info = await TechVJBot.get_me()
         await initialize_clients()
@@ -44,22 +51,18 @@ async def start():
         sys.exit(1)
 
     # Load Plugins
-    for name in files:
+    for file_path in plugin_files:
+        plugin_name = Path(file_path).stem
         try:
-            with open(name) as a:
-                patt = Path(a.name)
-                plugin_name = patt.stem.replace(".py", "")
-                plugins_dir = Path(f"plugins/{plugin_name}.py")
-                import_path = "plugins.{}".format(plugin_name)
-                spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
-                load = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(load)
-                sys.modules["plugins." + plugin_name] = load
-                print(f"✅ Plugin Loaded: {plugin_name}")
+            spec = importlib.util.spec_from_file_location(f"plugins.{plugin_name}", file_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            sys.modules[f"plugins.{plugin_name}"] = module
+            print(f"✅ Plugin Loaded: {plugin_name}")
         except Exception as e:
-            logging.warning(f"⚠️ Failed to load plugin {name}: {e}")
+            logging.warning(f"⚠️ Failed to load plugin {plugin_name}: {e}")
 
-    # Keepalive for Heroku
+    # Heroku Ping Keepalive
     if ON_HEROKU:
         asyncio.create_task(ping_server())
 
@@ -76,11 +79,12 @@ async def start():
     except Exception as e:
         logging.warning(f"⚠️ Failed to send restart log: {e}")
 
-    # Web App for Stream
+    # Web App Hosting
     try:
-        app = web.AppRunner(await web_server())
-        await app.setup()
-        await web.TCPSite(app, "0.0.0.0", PORT).start()
+        app_runner = web.AppRunner(await web_server())
+        await app_runner.setup()
+        site = web.TCPSite(app_runner, "0.0.0.0", PORT)
+        await site.start()
         logging.info("🌐 Web server started successfully.")
     except Exception as e:
         logging.error(f"❌ Web server start failed: {e}")
@@ -91,6 +95,6 @@ async def start():
 
 if __name__ == '__main__':
     try:
-        loop.run_until_complete(start())
+        asyncio.run(start())
     except KeyboardInterrupt:
         logging.info('🛑 Bot Stopped. Goodbye 👋')
