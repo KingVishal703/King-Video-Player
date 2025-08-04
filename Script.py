@@ -2,22 +2,20 @@
 # Subscribe YouTube Channel For Amazing Bot @Tech_VJ
 # Ask Doubt on telegram @KingVJ01
 
-
-class script(object):
+class Script:
     START_TXT = """<b>Hello {} 👋,
-    
-✏️ I Am Video Player Bot, I Stream File On Website And Earn Unlimited Money 💰.
 
-Send Me Any VJDisk Link Or Any File To See My Power.✨
+✏️ I am a Video Player Bot. I stream files on a website and help you earn unlimited money 💰.
 
-For Uploading File In Quality Option Use Command /quality
+📥 Send me any VJDisk link or any file to see my power. ✨
 
-More Commands Are /account , /update and /withdraw</b>"""
-    
-    RESTART_TXT = """
-<b>Bᴏᴛ Rᴇsᴛᴀʀᴛᴇᴅ !
+🔧 To upload a file with quality options, use the command <code>/quality</code>.
 
-📅 Dᴀᴛᴇ : <code>{}</code>
-⏰ Tɪᴍᴇ : <code>{}</code>
-🌐 Tɪᴍᴇᴢᴏɴᴇ : <code>Asia/Kolkata</code>
-🛠️ Bᴜɪʟᴅ Sᴛᴀᴛᴜs: <code>v2.7.1 [ Sᴛᴀʙʟᴇ ]</code></b>"""
+📋 More commands: <code>/account</code>, <code>/update</code>, <code>/withdraw</code></b>"""
+
+    RESTART_TXT = """<b>🔄 Bot Restarted!
+
+📅 Date: <code>{}</code>
+⏰ Time: <code>{}</code>
+🌐 Timezone: <code>Asia/Kolkata</code>
+🛠️ Build Status: <code>v2.7.1 [Stable]</code></b>"""
