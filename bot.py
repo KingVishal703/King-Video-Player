@@ -12,7 +12,7 @@ import asyncio
 from pathlib import Path
 from datetime import date, datetime
 from aiohttp import web
-
+import Script
 # Logging Setup
 try:
     logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
@@ -98,3 +98,4 @@ if __name__ == '__main__':
         asyncio.run(start())
     except KeyboardInterrupt:
         logging.info('🛑 Bot Stopped. Goodbye 👋')
+
